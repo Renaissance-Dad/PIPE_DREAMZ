@@ -1,12 +1,41 @@
 #include <genesis.h>
 //#include <resources.h>
 
+//DEFINES
+#define GRIDROWS 7
+#define GRIDCOLUMNS 11
+
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
 void initGame();
+void loadLevel(u8 lvl);
+
+//STRUCTS
+struct level{
+   u8 level_number;
+   u8 target_pipenumber;
+   int grid_data[GRIDROWS][GRIDCOLUMNS];
+   // we can add additional data fields later
+};
+
+//DATA
+struct level level_one = {1, 16, 
+    {
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 0
+        {0,0,0,0,0,1,0,0,0,0,0}, //row 1
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 2
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 3
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 4
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 5
+        {0,0,0,0,0,0,0,0,0,0,0}  //row 6
+    }
+};
 
 //GLOBAL SPRITE POINTERS
 Sprite* selector_spr;
+
+//GLOBAL VARIABLES
+int my_grid[GRIDROWS][GRIDCOLUMNS];
 
 int main(bool hard_reset)
 {
@@ -55,5 +84,13 @@ void initGame(){
     selector_spr = SPR_addSprite(&selectorsprite, 100, 100, TILE_ATTR(PAL1, 0, FALSE, FALSE));
     
     //loading the level data
-    //loadLevel(1);
+    loadLevel(1);
+}
+
+void loadLevel(u8 lvl){
+    // copy the leveldata first
+    if (lvl == 1){
+        memcpy(my_grid, level_one.grid_data, 308); //int = 4bytes, times 77
+    }
+    // draw the leveldata on the grid
 }
