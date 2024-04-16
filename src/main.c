@@ -30,6 +30,7 @@ void redrawSingleGridSegment(u8 x_grid, u8 y_grid);
 void redrawQueueSprite();
 void drawExplosion();
 void cleanupExplosion();
+void sfxQueueSpritesUpdate();
 
 //STRUCTS
 struct level{
@@ -95,7 +96,7 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
         //A-button logic
         if (changed & BUTTON_A & state){
             if (my_grid[selector_y][selector_x] == 0 || my_grid[selector_y][selector_x] > 9){ 
-                if(my_grid[selector_y][selector_x] > 9){drawExplosion();} 
+                if(my_grid[selector_y][selector_x] > 9 && sfx_chute == 0){drawExplosion();} 
                 my_grid[selector_y][selector_x] = pipe_queue[tail]+TILEINDEXOFFSET;
                 redrawSingleGridSegment(selector_x, selector_y);
                 redrawQueueSprite();
@@ -116,6 +117,7 @@ int main(bool hard_reset)
     while(1)
     {
         drawSelector();
+        sfxQueueSpritesUpdate();
         SYS_doVBlankProcess();
     }
     return (0);
@@ -296,4 +298,15 @@ void cleanupExplosion(){
         sfx_explosion_frame = 0;
         SPR_update();
     }
+}
+
+//sfxQueueSpritesUpdate() function which animates the movement of the Queue
+void sfxQueueSpritesUpdate(){
+    if (sfx_chute != 0){
+        for (u8 i = 0; i<5; i++){
+            SPR_setPosition(queue_spr[i], 8, SPR_getPositionY(queue_spr[i])+1);
+        }
+        sfx_chute--;
+    }   
+    SPR_update();
 }
