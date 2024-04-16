@@ -17,6 +17,7 @@ void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
 void initGame();
 void loadLevel(u8 lvl);
 void drawSegment(u8 x_grid, u8 y_grid, u8 segment);
+void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state);
 
 //STRUCTS
 struct level{
@@ -48,7 +49,33 @@ u8 flooz_x = NULL; //in tiles
 u8 flooz_y = NULL; //in tiles
 enum direction{N,E,S,W};
 enum direction flooz_direction = NULL;
+u8 selector_x;
+u8 selector_y;
 
+//actual callback function for the joypad
+void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
+    if (joy == JOY_1){
+        if(state & BUTTON_RIGHT){
+            if (selector_x+1 < GRIDCOLUMNS){
+                selector_x++;
+            }
+        }else if(state & BUTTON_LEFT){
+            if (selector_x-1 >= 0){
+                selector_x--;
+            }
+        }else if(state & BUTTON_UP){
+            if (selector_y-1 >= 0){
+                selector_y--;
+            }
+        }else if(state & BUTTON_DOWN){
+            if (selector_y+1 < GRIDROWS){
+                selector_y++;
+            }
+        }
+    }
+}
+
+//MAIN FUNCTION
 int main(bool hard_reset)
 {
     //loading the border tileset
@@ -134,4 +161,4 @@ void loadLevel(u8 lvl){
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
 void drawSegment(u8 x_grid, u8 y_grid, u8 segment){
     VDP_fillTileMapRectInc(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,(segment*9)+TILEINDEXOFFSET),(x_grid*3)+GRIDOFFSETX, (y_grid*3)+GRIDOFFSETY, 3, 3);
-};
+}
