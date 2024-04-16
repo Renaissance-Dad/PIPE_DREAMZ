@@ -26,6 +26,8 @@ void enQueue(u8 value); //writes a value and pushes the head
 void advanceTailQueue(); //pushes the tail
 void initQueue(); //calls enQueue() 5 times
 void setQueueSprites();
+void redrawSingleGridSegment(u8 x_grid, u8 y_grid);
+void redrawQueueSprite();
 
 //STRUCTS
 struct level{
@@ -64,6 +66,7 @@ u8 my_segment_goal;
 u8 pipe_queue[5];
 u8 head = 0;
 u8 tail = 0;
+u8 sfx_chute = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -84,6 +87,16 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
             if (selector_y+1 < GRIDROWS){
                 selector_y++;
             }
+        }
+        //A-button logic
+        if (changed & BUTTON_A & state){
+            if (my_grid[selector_y][selector_x] == 0){  
+                my_grid[selector_y][selector_x] = pipe_queue[tail]+TILEINDEXOFFSET;
+                redrawSingleGridSegment(selector_x, selector_y);
+                redrawQueueSprite();
+                advanceTailQueue();
+                sfx_chute = 24;
+            }  
         }
     }
 }
@@ -235,4 +248,18 @@ void setQueueSprites(){
         queue_spr[i] = SPR_addSprite(&queuesprites, 8, 104-(i*24),TILE_ATTR_FULL(PAL1, 0, FALSE, FALSE, 0));
         SPR_setAnim(queue_spr[i], pipe_queue[i]);
     }
+}
+
+
+//redrawSingleGridSegment() function; this is a wrapper function
+void redrawSingleGridSegment(u8 x_grid, u8 y_grid){
+    drawSegment(x_grid, y_grid, my_grid[y_grid][x_grid]);
+}
+
+//redrawQueueSprite() function
+void redrawQueueSprite(){
+    SPR_setPosition(queue_spr[tail], 8, SPR_getPositionY(queue_spr[tail])-120);
+    enQueue(calcRandomValue(6));
+    SPR_setAnim(queue_spr[tail], pipe_queue[tail]);
+    SPR_update();
 }
