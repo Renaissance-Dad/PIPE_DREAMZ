@@ -4,11 +4,17 @@
 //DEFINES
 #define GRIDROWS 7
 #define GRIDCOLUMNS 11
+#define TILEINDEXOFFSET 10
+#define AMOUNTOFSPECIALTILES 90
+#define GRIDOFFSETX 6
+#define GRIDOFFSETY 4
+
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
 void initGame();
 void loadLevel(u8 lvl);
+void drawSegment(u8 x_grid, u8 y_grid, u8 segment);
 
 //STRUCTS
 struct level{
@@ -41,6 +47,10 @@ int main(bool hard_reset)
 {
     //loading the border tileset
     VDP_loadTileSet(bordertile.tileset,1,DMA);
+    //loading the starting segment tileset
+    VDP_loadTileSet(pipesspecialtile.tileset,TILEINDEXOFFSET,DMA);
+    //loading the regular segment tileset
+    VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
 
     while(1)
     {
@@ -87,6 +97,7 @@ void initGame(){
     loadLevel(1);
 }
 
+//loadLevel() function copies the level data from ROM into RAM
 void loadLevel(u8 lvl){
     // copy the leveldata first
     if (lvl == 1){
@@ -94,3 +105,8 @@ void loadLevel(u8 lvl){
     }
     // draw the leveldata on the grid
 }
+
+// the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
+void drawSegment(u8 x_grid, u8 y_grid, u8 segment){
+    VDP_fillTileMapRectInc(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,(segment*9)+TILEINDEXOFFSET),(x_grid*3)+GRIDOFFSETX, (y_grid*3)+GRIDOFFSETY, 3, 3);
+};
