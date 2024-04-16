@@ -4,7 +4,7 @@
 //DEFINES
 #define GRIDROWS 7
 #define GRIDCOLUMNS 11
-#define TILEINDEXOFFSET 10
+#define TILEINDEXOFFSET 43
 #define AMOUNTOFSPECIALTILES 90
 #define GRIDOFFSETX 6
 #define GRIDOFFSETY 4
@@ -12,6 +12,8 @@
 #define FLOOZOFFSETY 5
 #define SELECTOROFFSETX 47
 #define SELECTOROFFSETY 31
+#define FLOOZTILEINDEXSTART 10
+#define FLOOZTILEINDEXVERTEMPTY 18
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
@@ -31,6 +33,7 @@ void redrawQueueSprite();
 void drawExplosion();
 void cleanupExplosion();
 void sfxQueueSpritesUpdate();
+void drawCountdown();
 
 //STRUCTS
 struct level{
@@ -38,6 +41,7 @@ struct level{
    u8 target_pipenumber;
    int grid_data[GRIDROWS][GRIDCOLUMNS];
    // we can add additional data fields later
+   u16 flooz_countdown; //in frames (60 frames = 1 sec)
 };
 
 //DATA
@@ -50,7 +54,8 @@ struct level level_one = {1, 16,
         {0,0,0,0,0,0,0,0,0,0,0}, //row 4
         {0,0,0,0,0,0,0,0,0,0,0}, //row 5
         {0,0,0,0,0,0,0,0,0,0,0}  //row 6
-    }
+    },
+    1200 
 };
 
 //GLOBAL SPRITE POINTERS
@@ -72,6 +77,8 @@ u8 head = 0;
 u8 tail = 0;
 u8 sfx_chute = 0;
 u8 sfx_explosion_frame = 0;
+u16 my_countdown;
+u16 timer = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -118,6 +125,8 @@ int main(bool hard_reset)
     {
         drawSelector();
         sfxQueueSpritesUpdate();
+        drawCountdown();
+        timer++;
         SYS_doVBlankProcess();
     }
     return (0);
@@ -168,6 +177,7 @@ void loadLevel(u8 lvl){
     if (lvl == 1){
         memcpy(my_grid, level_one.grid_data, 308); //int = 4bytes, times 77
         my_segment_goal = level_one.target_pipenumber;
+        my_countdown = level_one.flooz_countdown;
     }
     // draw the leveldata on the grid
     for(u8 i=0; i< GRIDROWS; i++){
@@ -216,6 +226,8 @@ void drawSelector(){
 void loadDMA(){
     //loading the border tileset
     VDP_loadTileSet(bordertile.tileset,1,DMA);
+    // loading the flooz segments
+    VDP_loadTileSet(flooztiles.tileset,FLOOZTILEINDEXSTART,DMA); //+10
     //loading the starting segment tileset
     VDP_loadTileSet(pipesspecialtile.tileset,TILEINDEXOFFSET,DMA);
     //loading the regular segment tileset
@@ -309,4 +321,28 @@ void sfxQueueSpritesUpdate(){
         sfx_chute--;
     }   
     SPR_update();
+}
+
+//function that draws the depleting bar at the beginning of the game. Both numeric and visually.
+void drawCountdown(){
+    int delta_timer = (my_countdown - timer)/5;
+    int my_whole_tiles = delta_timer /8;
+    if (timer%5 == 0 && delta_timer >= 0 && delta_timer <= 240){
+        int my_modulo = delta_timer %8;
+        // draw the whole segments
+        for (int i = 0; i < my_whole_tiles; i++){
+            VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXSTART), 35-i, 26);
+        }
+        // draw the partial segments 
+        VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTEMPTY-my_modulo), 35 - my_whole_tiles, 26);
+    }
+    //printing my_countdown 
+    if (timer%60 == 0 && delta_timer > 0){
+        char t[4];
+        sprintf(t, "%d", delta_timer/12);
+        VDP_drawText("      ", 37 , 26);
+        VDP_drawText(t, 37 , 26);
+    } else if (delta_timer == 0) {
+        VDP_drawText("0 ", 37, 26);
+    }
 }
