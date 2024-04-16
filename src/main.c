@@ -1,5 +1,5 @@
 #include <genesis.h>
-//#include <resources.h>
+#include <resources.h>
 
 //DEFINES
 #define GRIDROWS 7
@@ -20,6 +20,7 @@ void loadLevel(u8 lvl);
 void drawSegment(u8 x_grid, u8 y_grid, u8 segment);
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state);
 void drawSelector();
+void loadDMA();
 
 //STRUCTS
 struct level{
@@ -80,13 +81,8 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
 //MAIN FUNCTION
 int main(bool hard_reset)
 {
-    //loading the border tileset
-    VDP_loadTileSet(bordertile.tileset,1,DMA);
-    //loading the starting segment tileset
-    VDP_loadTileSet(pipesspecialtile.tileset,TILEINDEXOFFSET,DMA);
-    //loading the regular segment tileset
-    VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
 
+    loadDMA();
     initGame();
 
     while(1)
@@ -170,4 +166,16 @@ void drawSegment(u8 x_grid, u8 y_grid, u8 segment){
 void drawSelector(){
     SPR_setPosition(selector_spr,(selector_x*24)+SELECTOROFFSETX,(selector_y*24)+SELECTOROFFSETY);
     SPR_update();
+}
+
+//loadDMA() function, groups all our DMA routines together
+void loadDMA(){
+    //loading the border tileset
+    VDP_loadTileSet(bordertile.tileset,1,DMA);
+    //loading the starting segment tileset
+    VDP_loadTileSet(pipesspecialtile.tileset,TILEINDEXOFFSET,DMA);
+    //loading the regular segment tileset
+    VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
+    //loading the palettes
+    PAL_setPalette(PAL1, bordertile.palette->data, DMA);
 }
