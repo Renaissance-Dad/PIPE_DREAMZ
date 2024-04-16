@@ -1,12 +1,12 @@
-/**
- * Hello World Example
- * Created With Genesis-Code extension for Visual Studio Code
- * Use "Genesis Code: Compile" command to compile this program.
- **/
 #include <genesis.h>
+//#include <resources.h>
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
+void initGame();
+
+//GLOBAL SPRITE POINTERS
+Sprite* selector_spr;
 
 int main(bool hard_reset)
 {
@@ -37,4 +37,23 @@ void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height){
         VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,3), x_column, y_row+height);
         VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,2), x_column+width, y_row);
         VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,4), x_column+width, y_row+height);   
+}
+
+//initGame() function which sets up the main processes (sprite engine and joypad callback). Draws the borders.
+//sets up selector sprite.
+void initGame(){
+    drawBorder(0,0,4,16); //chute
+    drawBorder(5,3,34,22); //grid
+    drawBorder(5,0,34,2); //scoreboard 
+    
+    //initializing and setting up the joypad
+    JOY_init();
+    JOY_setEventHandler(&myJoyEventCallbackGame);
+    
+    //initializing the sprite engine
+    SPR_init();
+    selector_spr = SPR_addSprite(&selectorsprite, 100, 100, TILE_ATTR(PAL1, 0, FALSE, FALSE));
+    
+    //loading the level data
+    //loadLevel(1);
 }
