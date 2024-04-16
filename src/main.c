@@ -8,6 +8,8 @@
 #define AMOUNTOFSPECIALTILES 90
 #define GRIDOFFSETX 6
 #define GRIDOFFSETY 4
+#define FLOOZOFFSETX 7
+#define FLOOZOFFSETY 5
 
 
 //FFWD DECLARATION OF OUR FUNCTIONS
@@ -42,6 +44,10 @@ Sprite* selector_spr;
 
 //GLOBAL VARIABLES
 int my_grid[GRIDROWS][GRIDCOLUMNS];
+u8 flooz_x = NULL; //in tiles
+u8 flooz_y = NULL; //in tiles
+enum direction{N,E,S,W};
+enum direction flooz_direction = NULL;
 
 int main(bool hard_reset)
 {
@@ -51,6 +57,8 @@ int main(bool hard_reset)
     VDP_loadTileSet(pipesspecialtile.tileset,TILEINDEXOFFSET,DMA);
     //loading the regular segment tileset
     VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
+
+    initGame();
 
     while(1)
     {
@@ -104,6 +112,23 @@ void loadLevel(u8 lvl){
         memcpy(my_grid, level_one.grid_data, 308); //int = 4bytes, times 77
     }
     // draw the leveldata on the grid
+    for(u8 i=0; i< GRIDROWS; i++){
+        for(u8 j=0; j< GRIDCOLUMNS; j++){
+            if (my_grid[i][j] == 0){
+                drawSegment(j, i, 0);
+            } else if (my_grid[i][j] >= 1 && my_grid[i][j] <= 4) {
+                drawSegment(j, i, my_grid[i][j]);
+                flooz_x = (j*3)+ FLOOZOFFSETX; 
+                flooz_y = (i*3)+ FLOOZOFFSETY; 
+                switch (my_grid[i][j]){
+                    case 1: flooz_direction = S; break;
+                    case 2: flooz_direction = E; break;
+                    case 3: flooz_direction = N; break;
+                    case 4: flooz_direction = W; break;
+                }
+            }
+        }     
+    }
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
