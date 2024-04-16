@@ -21,6 +21,10 @@ void drawSegment(u8 x_grid, u8 y_grid, u8 segment);
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state);
 void drawSelector();
 void loadDMA();
+int calcRandomValue(u8 max);
+void enQueue(u8 value); //writes a value and pushes the head
+void advanceTailQueue(); //pushes the tail
+void initQueue(); //calls enQueue() 5 times
 
 //STRUCTS
 struct level{
@@ -45,6 +49,7 @@ struct level level_one = {1, 16,
 
 //GLOBAL SPRITE POINTERS
 Sprite* selector_spr;
+Sprite* queue_spr[5];
 
 //GLOBAL VARIABLES
 int my_grid[GRIDROWS][GRIDCOLUMNS];
@@ -55,6 +60,9 @@ enum direction flooz_direction = NULL;
 u8 selector_x;
 u8 selector_y;
 u8 my_segment_goal;
+u8 pipe_queue[5];
+u8 head = 0;
+u8 tail = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -189,4 +197,30 @@ void loadDMA(){
     VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
     //loading the palettes
     PAL_setPalette(PAL1, bordertile.palette->data, DMA);
+}
+
+//calcRandomValue() function, gives random value between 0 and max
+int calcRandomValue(u8 max){
+    u8 value = (random() % (max + 1));
+    return value;
+}
+
+//enQueue() function adds value to the queue at the head position and wraps around at 5
+void enQueue(u8 value){
+    pipe_queue[head] = value;
+    head++;
+    head %= 5;
+}
+
+//advanceTailQueue() function, advances the tail and wraps around at 5
+void advanceTailQueue(){
+    tail++;
+    tail %= 5;
+}
+
+//initializes the Queue and fills it with 5 values between 0 and 6, representing 7 different (regular) pipe segments
+void initQueue(){
+    for (u8 i = 0; i<5; i++){
+        enQueue(calcRandomValue(6));
+    }
 }
