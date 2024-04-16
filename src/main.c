@@ -10,7 +10,8 @@
 #define GRIDOFFSETY 4
 #define FLOOZOFFSETX 7
 #define FLOOZOFFSETY 5
-
+#define SELECTOROFFSETX 47
+#define SELECTOROFFSETY 31
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
@@ -18,6 +19,7 @@ void initGame();
 void loadLevel(u8 lvl);
 void drawSegment(u8 x_grid, u8 y_grid, u8 segment);
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state);
+void drawSelector();
 
 //STRUCTS
 struct level{
@@ -89,6 +91,7 @@ int main(bool hard_reset)
 
     while(1)
     {
+        drawSelector();
         SYS_doVBlankProcess();
     }
     return (0);
@@ -161,4 +164,10 @@ void loadLevel(u8 lvl){
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
 void drawSegment(u8 x_grid, u8 y_grid, u8 segment){
     VDP_fillTileMapRectInc(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,(segment*9)+TILEINDEXOFFSET),(x_grid*3)+GRIDOFFSETX, (y_grid*3)+GRIDOFFSETY, 3, 3);
+}
+
+//drawSelector() function
+void drawSelector(){
+    SPR_setPosition(selector_spr,(selector_x*24)+SELECTOROFFSETX,(selector_y*24)+SELECTOROFFSETY);
+    SPR_update();
 }
