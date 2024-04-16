@@ -25,6 +25,7 @@ int calcRandomValue(u8 max);
 void enQueue(u8 value); //writes a value and pushes the head
 void advanceTailQueue(); //pushes the tail
 void initQueue(); //calls enQueue() 5 times
+void setQueueSprites();
 
 //STRUCTS
 struct level{
@@ -173,7 +174,10 @@ void loadLevel(u8 lvl){
     char pipes_str[3];
     sprintf(pipes_str,"%d",my_segment_goal);
     VDP_drawText("TARGET:",29,1);
-    VDP_drawText(pipes_str,36,1);	
+    VDP_drawText(pipes_str,36,1);
+    //initialize the queue
+    initQueue();
+    setQueueSprites();	
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
@@ -222,5 +226,13 @@ void advanceTailQueue(){
 void initQueue(){
     for (u8 i = 0; i<5; i++){
         enQueue(calcRandomValue(6));
+    }
+}
+
+//setQueueSprites() function
+void setQueueSprites(){
+    for (u8 i = 0; i<5; i++){   
+        queue_spr[i] = SPR_addSprite(&queuesprites, 8, 104-(i*24),TILE_ATTR_FULL(PAL1, 0, FALSE, FALSE, 0));
+        SPR_setAnim(queue_spr[i], pipe_queue[i]);
     }
 }
