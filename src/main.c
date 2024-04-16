@@ -28,6 +28,8 @@ void initQueue(); //calls enQueue() 5 times
 void setQueueSprites();
 void redrawSingleGridSegment(u8 x_grid, u8 y_grid);
 void redrawQueueSprite();
+void drawExplosion();
+void cleanupExplosion();
 
 //STRUCTS
 struct level{
@@ -53,6 +55,7 @@ struct level level_one = {1, 16,
 //GLOBAL SPRITE POINTERS
 Sprite* selector_spr;
 Sprite* queue_spr[5];
+Sprite* explosion_spr;
 
 //GLOBAL VARIABLES
 int my_grid[GRIDROWS][GRIDCOLUMNS];
@@ -67,6 +70,7 @@ u8 pipe_queue[5];
 u8 head = 0;
 u8 tail = 0;
 u8 sfx_chute = 0;
+u8 sfx_explosion_frame = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -90,7 +94,8 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
         }
         //A-button logic
         if (changed & BUTTON_A & state){
-            if (my_grid[selector_y][selector_x] == 0){  
+            if (my_grid[selector_y][selector_x] == 0 || my_grid[selector_y][selector_x] > 9){ 
+                if(my_grid[selector_y][selector_x] > 9){drawExplosion();} 
                 my_grid[selector_y][selector_x] = pipe_queue[tail]+TILEINDEXOFFSET;
                 redrawSingleGridSegment(selector_x, selector_y);
                 redrawQueueSprite();
@@ -149,6 +154,7 @@ void initGame(){
     //initializing the sprite engine
     SPR_init();
     selector_spr = SPR_addSprite(&selectorsprite, 100, 100, TILE_ATTR(PAL1, 0, FALSE, FALSE));
+    explosion_spr = SPR_addSprite(&explosionsprite, -100, -100, TILE_ATTR(PAL3, 0, FALSE, FALSE));
     
     //loading the level data
     loadLevel(1);
@@ -214,6 +220,8 @@ void loadDMA(){
     VDP_loadTileSet(pipesregulartile.tileset,(TILEINDEXOFFSET + AMOUNTOFSPECIALTILES),DMA);
     //loading the palettes
     PAL_setPalette(PAL1, bordertile.palette->data, DMA);
+    // load the colors of the explosion
+    PAL_setPalette(PAL3, explosioncolors.palette->data, DMA);
 }
 
 //calcRandomValue() function, gives random value between 0 and max
@@ -262,4 +270,30 @@ void redrawQueueSprite(){
     enQueue(calcRandomValue(6));
     SPR_setAnim(queue_spr[tail], pipe_queue[tail]);
     SPR_update();
+}
+
+// the drawExplosion() function which draws the explosion sprite on the screen
+void drawExplosion(){
+    SPR_setPosition(explosion_spr,(selector_x*24)+48,(selector_y*24)+32);
+    SPR_setAnim(explosion_spr, 0);
+    void (*sfx_ptr)(); //function pointer
+    sfx_ptr = cleanupExplosion;
+    SPR_setFrameChangeCallback(explosion_spr, sfx_ptr);
+    SPR_update(); 
+}
+
+//the cleanupExplosion() callback function
+void cleanupExplosion(){
+    /* SGDK has a new method but it's not working atm
+    if (!SPR_getAnimationDone(explosion_spr)) {
+        SPR_setPosition(explosion_spr, -100,-100);
+        SPR_update();
+    }
+    */
+    sfx_explosion_frame++;
+    if (sfx_explosion_frame == 11) {
+        SPR_setPosition(explosion_spr, -100,-100);
+        sfx_explosion_frame = 0;
+        SPR_update();
+    }
 }
