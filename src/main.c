@@ -54,6 +54,7 @@ enum direction{N,E,S,W};
 enum direction flooz_direction = NULL;
 u8 selector_x;
 u8 selector_y;
+u8 my_segment_goal;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -136,6 +137,7 @@ void loadLevel(u8 lvl){
     // copy the leveldata first
     if (lvl == 1){
         memcpy(my_grid, level_one.grid_data, 308); //int = 4bytes, times 77
+        my_segment_goal = level_one.target_pipenumber;
     }
     // draw the leveldata on the grid
     for(u8 i=0; i< GRIDROWS; i++){
@@ -155,6 +157,15 @@ void loadLevel(u8 lvl){
             }
         }     
     }
+    //draw the scoreboard content
+    char level_str[2];
+    sprintf(level_str,"%d",lvl);
+    VDP_drawText("LEVEL:",7,1);
+    VDP_drawText(level_str,13,1);
+    char pipes_str[3];
+    sprintf(pipes_str,"%d",my_segment_goal);
+    VDP_drawText("TARGET:",29,1);
+    VDP_drawText(pipes_str,36,1);	
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
