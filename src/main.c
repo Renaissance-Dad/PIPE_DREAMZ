@@ -14,6 +14,8 @@
 #define SELECTOROFFSETY 31
 #define FLOOZTILEINDEXSTART 10
 #define FLOOZTILEINDEXVERTEMPTY 18
+#define FLOOZTILEINDEXVERTSTART 26
+#define FLOOZTILEINDEXHORZSTART 17
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
@@ -34,6 +36,7 @@ void drawExplosion();
 void cleanupExplosion();
 void sfxQueueSpritesUpdate();
 void drawCountdown();
+void drawFlooz();
 
 //STRUCTS
 struct level{
@@ -298,7 +301,7 @@ void drawExplosion(){
 
 //the cleanupExplosion() callback function
 void cleanupExplosion(){
-    /* SGDK has a new method but it's not working atm
+    /* SGDK 2.0 has a new method but it's not working atm
     if (!SPR_getAnimationDone(explosion_spr)) {
         SPR_setPosition(explosion_spr, -100,-100);
         SPR_update();
@@ -345,4 +348,32 @@ void drawCountdown(){
     } else if (delta_timer == 0) {
         VDP_drawText("0 ", 37, 26);
     }
+}
+
+//drawFlooz() function which draws the flooz, using tiles. 
+void drawFlooz(){
+    int game_timer = timer - my_countdown;
+    int flooz_counter = game_timer/5;
+    flooz_counter %= 8;
+
+    //draw the flooz
+    if (game_timer %5 == 0 && game_timer >= 0) {
+        //draw the flooz based on the direction
+        switch (flooz_direction) {
+            case N: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXVERTSTART -flooz_counter), flooz_x, flooz_y); break;
+            case E: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,TRUE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
+            case S: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTSTART-flooz_counter), flooz_x, flooz_y); break;
+            case W: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
+        }
+    } 
+    
+    // move flooz_x and flooz_y at the end as we need correct coordinates before we draw
+    if (game_timer%40 == 39 && flooz_counter == 7){
+        switch (flooz_direction) {
+            case N: flooz_y--; break;
+            case E: flooz_x++; break;
+            case S: flooz_y++; break;
+            case W: flooz_x--; break;
+        }  
+    }   
 }
