@@ -37,6 +37,7 @@ void cleanupExplosion();
 void sfxQueueSpritesUpdate();
 void drawCountdown();
 void drawFlooz();
+enum direction inverseDirection(enum direction windsock);
 
 //STRUCTS
 struct level{
@@ -59,6 +60,23 @@ struct level level_one = {1, 16,
         {0,0,0,0,0,0,0,0,0,0,0}  //row 6
     },
     1200 
+};
+
+const bool pipe_data[7][4] = {
+    //straigth down : row 0
+    {TRUE,FALSE,TRUE,FALSE},
+    //straight flat : row 1
+    {FALSE,TRUE,FALSE,TRUE},
+    //SW-bend : row 2
+    {FALSE,FALSE,TRUE,TRUE},
+    //NW-bend : row 3
+    {TRUE,FALSE,FALSE,TRUE},
+    //NE-bend : row 4
+    {TRUE,TRUE,FALSE,FALSE},
+    //SE-bend : row 5
+    {FALSE,TRUE,TRUE,FALSE},
+    //cross: row 6
+    {TRUE, TRUE, TRUE, TRUE}
 };
 
 //GLOBAL SPRITE POINTERS
@@ -397,4 +415,15 @@ void drawFlooz(){
             }
         }  
     }   
+}
+
+//simple function inverseDirection() that inverses the enum NESW
+enum direction inverseDirection(enum direction windsock){
+    switch (windsock){
+        case N: windsock = S; break;
+        case E: windsock = W; break;
+        case S: windsock = N; break;
+        case W: windsock = E; break;
+    }
+    return windsock;
 }
