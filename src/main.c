@@ -17,6 +17,8 @@
 #define FLOOZTILEINDEXVERTSTART 26
 #define FLOOZTILEINDEXHORZSTART 17
 #define PIPEDATAOFFSET 10
+#define FLOOZTILEINDEXCWSTART 35
+#define FLOOZTILEINDEXCCWSTART 27
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
@@ -395,12 +397,54 @@ void drawFlooz(){
 
     //draw the flooz
     if (game_timer %5 == 0 && game_timer >= 0) {
-        //draw the flooz based on the direction
-        switch (flooz_direction) {
-            case N: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXVERTSTART -flooz_counter), flooz_x, flooz_y); break;
-            case E: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,TRUE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
-            case S: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTSTART-flooz_counter), flooz_x, flooz_y); break;
-            case W: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
+		if ((flooz_length-2) %3 == 1){
+			//check with which bend pipe we're workign
+			switch (my_grid[flooz_grid_y][flooz_grid_x]){
+                case 12: //SW pipe
+		            if (flooz_direction == E) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,TRUE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = S;}
+                    } else if (flooz_direction == N) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,TRUE,FLOOZTILEINDEXCCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = W;}
+                    }              
+                break; 
+                case 13:  //NW pipe
+                    if (flooz_direction == E) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,TRUE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = N;}
+                    } else if (flooz_direction == S) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,TRUE,FLOOZTILEINDEXCCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = W;}
+                    }   
+                break;
+                case 14:  //NE pipe
+                    if (flooz_direction == S) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXCCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = E;}
+                    } else if (flooz_direction == W) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = N;}
+                    }  
+                break;
+                case 15:  //SE pipe
+                    if (flooz_direction == W) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = S;}
+                    } else if (flooz_direction == N) {
+                        VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXCCWSTART+flooz_counter), flooz_x, flooz_y);
+                        if (flooz_counter == 7){ flooz_direction = E;}
+                    }
+                break;
+            }  
+		} else {
+            //when in a straight tile based on the direction, we draw the flooz
+            switch (flooz_direction) {
+                case N: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXVERTSTART -flooz_counter), flooz_x, flooz_y); break;
+                case E: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,TRUE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
+                case S: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTSTART-flooz_counter), flooz_x, flooz_y); break;
+                case W: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
+            }
         }
     } 
     
