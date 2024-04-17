@@ -91,7 +91,7 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
         //A-button logic
         if (changed & BUTTON_A & state){
             if (my_grid[selector_y][selector_x] == 0){  
-                my_grid[selector_y][selector_x] = pipe_queue[tail]+TILEINDEXOFFSET;
+                my_grid[selector_y][selector_x] = pipe_queue[tail]+10; //first 10 segments are special segments
                 redrawSingleGridSegment(selector_x, selector_y);
                 redrawQueueSprite();
                 advanceTailQueue();
