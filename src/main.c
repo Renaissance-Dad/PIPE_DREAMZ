@@ -16,6 +16,7 @@
 #define FLOOZTILEINDEXVERTEMPTY 18
 #define FLOOZTILEINDEXVERTSTART 26
 #define FLOOZTILEINDEXHORZSTART 17
+#define PIPEDATAOFFSET 10
 
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
@@ -103,6 +104,15 @@ u16 timer = 0;
 u8 flooz_length; //in tiles
 u8 flooz_grid_x;
 u8 flooz_grid_y;
+enum states {
+    GAME_INIT,
+    GAME_LOOP,
+    GAME_OVER,
+    GAME_PAUSE,
+    LEVEL_CLEARED,
+    BONUS_MODE
+};
+enum states my_state = GAME_INIT;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -145,11 +155,12 @@ int main(bool hard_reset)
     loadDMA();
     initGame();
 
-    while(1)
+    while(my_state != GAME_OVER)
     {
         drawSelector();
         sfxQueueSpritesUpdate();
         drawCountdown();
+        drawFlooz();
         timer++;
         SYS_doVBlankProcess();
     }
@@ -412,6 +423,10 @@ void drawFlooz(){
             //check if pipe is valid and update gamestate
             if (my_grid[flooz_grid_y][flooz_grid_x] == 0){ 
                 VDP_drawText("OOOPS NO PIPE", 10, 24);
+                my_state = GAME_OVER;
+            } else if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE){  
+                VDP_drawText("WRONG PIPE", 10, 24);
+                my_state = GAME_OVER;
             }
         }  
     }   
