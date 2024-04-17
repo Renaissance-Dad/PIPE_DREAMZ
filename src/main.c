@@ -515,7 +515,7 @@ void checkNextSegment(){
 }
 
 //the actual drawScoreboard function
-void drawScorebaord(){
+void drawScoreboard(){
     char score_str[5];
     sprintf(score_str,"%d",my_score);
     VDP_drawText("SCORE:",17,1);
