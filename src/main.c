@@ -445,6 +445,10 @@ void drawFlooz(){
                 case S: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTSTART-flooz_counter), flooz_x, flooz_y); break;
                 case W: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,17-FLOOZTILEINDEXHORZSTART), flooz_x, flooz_y); break;
             }
+            //switch the sign after filling 2/3ths or 2/7th of a segment
+            if ((my_grid[flooz_grid_y][flooz_grid_x] > 0) && ((flooz_length-2)%3 == 2)){
+		         my_grid[flooz_grid_y][flooz_grid_x] = my_grid[flooz_grid_y][flooz_grid_x] * -1;
+            }
         }
     } 
     
@@ -487,7 +491,7 @@ void checkNextSegment(){
     if (my_grid[flooz_grid_y][flooz_grid_x] == 0){
         VDP_drawText("OOOPS NO PIPE", 10, 24);
         my_state = GAME_OVER;
-    } else if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE){  
+    } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE){  
         VDP_drawText("WRONG PIPE", 10, 24);
         my_state = GAME_OVER;
     }
