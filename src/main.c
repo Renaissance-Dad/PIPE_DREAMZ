@@ -82,6 +82,9 @@ u8 sfx_chute = 0;
 u8 sfx_explosion_frame = 0;
 u16 my_countdown;
 u16 timer = 0;
+u8 flooz_length; //in tiles
+u8 flooz_grid_x;
+u8 flooz_grid_y;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -189,6 +192,8 @@ void loadLevel(u8 lvl){
                 drawSegment(j, i, 0);
             } else if (my_grid[i][j] >= 1 && my_grid[i][j] <= 4) {
                 drawSegment(j, i, my_grid[i][j]);
+                flooz_grid_x = j;
+                flooz_grid_y = i; 
                 flooz_x = (j*3)+ FLOOZOFFSETX; 
                 flooz_y = (i*3)+ FLOOZOFFSETY; 
                 switch (my_grid[i][j]){
@@ -211,7 +216,9 @@ void loadLevel(u8 lvl){
     VDP_drawText(pipes_str,36,1);
     //initialize the queue
     initQueue();
-    setQueueSprites();	
+    setQueueSprites();
+    //reset the flooz length value
+    flooz_length = 0;	
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
@@ -374,6 +381,20 @@ void drawFlooz(){
             case E: flooz_x++; break;
             case S: flooz_y++; break;
             case W: flooz_x--; break;
+        }
+        flooz_length++;
+        //change flooz_grid variables based on the flooz_length
+        if ((flooz_length-2) %3 == 0){
+            switch (flooz_direction){
+                case N: flooz_grid_y--; break;
+                case E: flooz_grid_x++; break;
+                case S: flooz_grid_y++; break;
+                case W: flooz_grid_x--; break;
+            }    
+            //check if pipe is valid and update gamestate
+            if (my_grid[flooz_grid_y][flooz_grid_x] == 0){ 
+                VDP_drawText("OOOPS NO PIPE", 10, 24);
+            }
         }  
     }   
 }
