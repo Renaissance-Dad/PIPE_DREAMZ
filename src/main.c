@@ -116,6 +116,7 @@ enum states {
     BONUS_MODE
 };
 enum states my_state = GAME_INIT;
+int my_score = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -250,7 +251,9 @@ void loadLevel(u8 lvl){
     initQueue();
     setQueueSprites();
     //reset the flooz length value
-    flooz_length = 0;	
+    flooz_length = 0;
+    //reset level score
+    my_score = 0;	
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
@@ -436,6 +439,9 @@ void drawFlooz(){
                         if (flooz_counter == 7){ flooz_direction = E;}
                     }
                 break;
+                case -16: //cross pipe, we skip the animation but give 100 extra points
+                    if (flooz_counter == 7){ my_score += 100;}
+                break;
             }  
 		} else {
             //when in a straight tile based on the direction, we draw the flooz
@@ -468,6 +474,15 @@ void drawFlooz(){
                 case E: flooz_grid_x++; break;
                 case S: flooz_grid_y++; break;
                 case W: flooz_grid_x--; break;
+            }
+            my_score += 20;
+            if (my_state == BONUS_MODE){
+                my_score += 20;
+            }
+            my_segment_goal--;
+            if (my_segment_goal == 0){
+                my_state = BONUS_MODE; 
+                VDP_drawText("BONUS MODE", 10, 24); 
             }    
             checkNextSegment();  
         }  
