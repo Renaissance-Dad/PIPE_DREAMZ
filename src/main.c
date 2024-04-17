@@ -505,13 +505,23 @@ enum direction inverseDirection(enum direction windsock){
 //the checkNextPipe() function which groups all the game-state logic when flooz hits a new grid position
 void checkNextSegment(){
 	//check if pipe is valid and update gamestate
-    if (my_grid[flooz_grid_y][flooz_grid_x] == 0){
-        VDP_drawText("OOOPS NO PIPE", 10, 24);
-        my_state = GAME_OVER;
-    } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE){  
-        VDP_drawText("WRONG PIPE", 10, 24);
-        my_state = GAME_OVER;
-    }
+    if (my_grid[flooz_grid_y][flooz_grid_x] == 0){ 
+        if (my_state == BONUS_MODE){
+            VDP_drawText("LEVEL CLEARED", 10, 24);
+            my_state = LEVEL_CLEARED;
+        } else {         
+            VDP_drawText("OOOPS NO PIPE", 10, 24);
+            my_state = GAME_OVER;
+        }
+    } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE) {
+        if (my_state == BONUS_MODE){
+            VDP_drawText("LEVEL CLEARED", 10, 24);
+            my_state = LEVEL_CLEARED;
+        } else {         
+            VDP_drawText("WRONG PIPE", 10, 24);
+            my_state = GAME_OVER;
+        }
+    } 
 }
 
 //the actual drawScoreboard function
