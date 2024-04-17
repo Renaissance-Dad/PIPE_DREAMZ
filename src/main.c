@@ -42,6 +42,7 @@ void drawCountdown();
 void drawFlooz();
 enum direction inverseDirection(enum direction windsock);
 void checkNextSegment();
+void drawScoreboard();
 
 //STRUCTS
 struct level{
@@ -165,6 +166,7 @@ int main(bool hard_reset)
         sfxQueueSpritesUpdate();
         drawCountdown();
         drawFlooz();
+        drawScoreboard();
         timer++;
         SYS_doVBlankProcess();
     }
@@ -510,4 +512,18 @@ void checkNextSegment(){
         VDP_drawText("WRONG PIPE", 10, 24);
         my_state = GAME_OVER;
     }
+}
+
+//the actual drawScoreboard function
+void drawScorebaord(){
+    char score_str[5];
+    sprintf(score_str,"%d",my_score);
+    VDP_drawText("SCORE:",17,1);
+    VDP_drawText(score_str,23,1);
+    char pipes_str[3];
+    sprintf(pipes_str,"%d",my_segment_goal);
+    VDP_drawText("TARGET:",29,1);
+    VDP_drawText(pipes_str,36,1);
+    if(my_segment_goal <= 9){VDP_drawText(" ",37,1);}
+    if(my_segment_goal == 0){VDP_drawText("0",37,1);}
 }
