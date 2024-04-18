@@ -42,6 +42,7 @@ void drawCountdown();
 void drawFlooz();
 enum direction inverseDirection(enum direction windsock);
 void checkNextSegment();
+void drawScoreboard();
 
 //STRUCTS
 struct level{
@@ -116,6 +117,7 @@ enum states {
     BONUS_MODE
 };
 enum states my_state = GAME_INIT;
+int my_score = 0;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -141,7 +143,7 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
         if (changed & BUTTON_A & state){
             if (my_grid[selector_y][selector_x] == 0 || my_grid[selector_y][selector_x] > 9){ 
                 if(my_grid[selector_y][selector_x] > 9 && sfx_chute == 0){drawExplosion();} 
-                my_grid[selector_y][selector_x] = pipe_queue[tail]+10;
+                my_grid[selector_y][selector_x] = pipe_queue[tail]+10; //first 10 segments are special segments
                 redrawSingleGridSegment(selector_x, selector_y);
                 redrawQueueSprite();
                 advanceTailQueue();
@@ -164,6 +166,7 @@ int main(bool hard_reset)
         sfxQueueSpritesUpdate();
         drawCountdown();
         drawFlooz();
+        drawScoreboard();
         timer++;
         SYS_doVBlankProcess();
     }
@@ -250,7 +253,9 @@ void loadLevel(u8 lvl){
     initQueue();
     setQueueSprites();
     //reset the flooz length value
-    flooz_length = 0;	
+    flooz_length = 0;
+    //reset level score
+    my_score = 0;	
 }
 
 // the drawSegment() function draws 3x3 tiles which represents a pipe segment. 
@@ -399,7 +404,7 @@ void drawFlooz(){
     if (game_timer %5 == 0 && game_timer >= 0) {
         //pipes 12-->15 and 1/3rd of flooz drawn
         if ((12 <= my_grid[flooz_grid_y][flooz_grid_x]) && (my_grid[flooz_grid_y][flooz_grid_x] <= 15) && ((flooz_length-2) %3 == 1)){
-			switch (my_grid[flooz_grid_y][flooz_grid_x]){
+			      switch (my_grid[flooz_grid_y][flooz_grid_x]){
                 case 12: //SW pipe
 		            if (flooz_direction == E) {
                         VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,TRUE,TRUE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
@@ -447,6 +452,10 @@ void drawFlooz(){
                 case S: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXVERTSTART -flooz_counter), flooz_x, flooz_y); break;
                 case W: VDP_setTileMapXY(BG_A,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXHORZSTART -flooz_counter), flooz_x, flooz_y); break;
             }
+            //switch the sign after filling 2/3ths or 2/7th of a segment
+            if ((my_grid[flooz_grid_y][flooz_grid_x] > 0) && ((flooz_length-2)%3 == 2)){
+		         my_grid[flooz_grid_y][flooz_grid_x] = my_grid[flooz_grid_y][flooz_grid_x] * -1;
+            }
         }
     } 
     
@@ -466,6 +475,15 @@ void drawFlooz(){
                 case E: flooz_grid_x++; break;
                 case S: flooz_grid_y++; break;
                 case W: flooz_grid_x--; break;
+            }
+            my_score += 20;
+            if (my_state == BONUS_MODE){
+                my_score += 20;
+            }
+            my_segment_goal--;
+            if (my_segment_goal == 0){
+                my_state = BONUS_MODE; 
+                VDP_drawText("BONUS MODE", 10, 24); 
             }    
             checkNextSegment();  
         }  
@@ -486,11 +504,35 @@ enum direction inverseDirection(enum direction windsock){
 //the checkNextPipe() function which groups all the game-state logic when flooz hits a new grid position
 void checkNextSegment(){
 	//check if pipe is valid and update gamestate
-    if (my_grid[flooz_grid_y][flooz_grid_x] == 0){
-        VDP_drawText("OOOPS NO PIPE", 10, 24);
-        my_state = GAME_OVER;
-    } else if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE){  
-        VDP_drawText("WRONG PIPE", 10, 24);
-        my_state = GAME_OVER;
-    }
+    if (my_grid[flooz_grid_y][flooz_grid_x] == 0){ 
+        if (my_state == BONUS_MODE){
+            VDP_drawText("LEVEL CLEARED", 10, 24);
+            my_state = LEVEL_CLEARED;
+        } else {         
+            VDP_drawText("OOOPS NO PIPE", 10, 24);
+            my_state = GAME_OVER;
+        }
+    } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE) {
+        if (my_state == BONUS_MODE){
+            VDP_drawText("LEVEL CLEARED", 10, 24);
+            my_state = LEVEL_CLEARED;
+        } else {         
+            VDP_drawText("WRONG PIPE", 10, 24);
+            my_state = GAME_OVER;
+        }
+    } 
+}
+
+//the actual drawScoreboard function
+void drawScoreboard(){
+    char score_str[5];
+    sprintf(score_str,"%d",my_score);
+    VDP_drawText("SCORE:",17,1);
+    VDP_drawText(score_str,23,1);
+    char pipes_str[3];
+    sprintf(pipes_str,"%d",my_segment_goal);
+    VDP_drawText("TARGET:",29,1);
+    VDP_drawText(pipes_str,36,1);
+    if(my_segment_goal <= 9){VDP_drawText(" ",37,1);}
+    if(my_segment_goal == 0){VDP_drawText("0",37,1);}
 }
