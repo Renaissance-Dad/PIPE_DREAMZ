@@ -43,6 +43,7 @@ void drawFlooz();
 enum direction inverseDirection(enum direction windsock);
 void checkNextSegment();
 void drawScoreboard();
+void doTimer();
 
 //STRUCTS
 struct level{
@@ -172,6 +173,13 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
                 sfx_chute = 24;
             }  
         }
+        //START-button logic
+        if (changed & BUTTON_START & state){
+		    if (changed & BUTTON_START & state){
+                if (my_state != GAME_PAUSE){my_state = GAME_PAUSE; VDP_drawText("PAUSE",1,26);}
+                else if (my_state == GAME_PAUSE){my_state = GAME_LOOP; VDP_drawText("LOOP!",1,26);}
+            }
+        }
     }
 }
 
@@ -189,7 +197,7 @@ int main(bool hard_reset)
         drawCountdown();
         drawFlooz();
         drawScoreboard();
-        timer++;
+        doTimer();
         SYS_doVBlankProcess();
     }
     return (0);
@@ -573,4 +581,11 @@ void drawScoreboard(){
     VDP_drawText(pipes_str,36,1);
     if(my_segment_goal <= 9){VDP_drawText(" ",37,1);}
     if(my_segment_goal == 0){VDP_drawText("0",37,1);}
+}
+
+//wrapper function around our timer
+void doTimer(){
+		if(my_state != GAME_PAUSE){
+				timer++;
+		}
 }
