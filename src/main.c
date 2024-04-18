@@ -67,7 +67,20 @@ struct level level_one = {1, 16,
     1200 
 };
 
-const bool pipe_data[7][4] = {
+struct level level_two = {2, 20, 
+	{
+		{0,0,0,0,0,0,0,0,0,0,0}, //row 0
+		{0,0,0,0,9,0,0,0,0,0,0}, //row 1
+		{0,0,0,0,0,0,0,0,0,0,0}, //row 2
+		{0,0,3,0,0,0,0,0,8,0,0}, //row 3
+		{0,0,0,0,0,0,0,0,0,0,0}, //row 4
+		{0,0,0,0,0,9,0,0,0,0,0}, //row 5
+		{0,0,0,0,0,0,0,0,0,0,0}  //row 6
+	}, 
+	300 
+};
+
+const bool pipe_data[11][4] = {
     //straigth down : row 0
     {TRUE,FALSE,TRUE,FALSE},
     //straight flat : row 1
@@ -81,7 +94,15 @@ const bool pipe_data[7][4] = {
     //SE-bend : row 5
     {FALSE,TRUE,TRUE,FALSE},
     //cross: row 6
-    {TRUE, TRUE, TRUE, TRUE}
+    {TRUE, TRUE, TRUE, TRUE},
+    //end-segment south: row 7
+	{FALSE,FALSE,TRUE,FALSE},
+	//end-segment west: row 8
+	{FALSE,FALSE,FALSE,TRUE},
+	//end-segment north: row 9
+	{TRUE,FALSE,FALSE,FALSE},
+	//end-segment east: row 10
+	{FALSE,TRUE,FALSE,FALSE}
 };
 
 //GLOBAL SPRITE POINTERS
@@ -118,6 +139,7 @@ enum states {
 };
 enum states my_state = GAME_INIT;
 int my_score = 0;
+struct level *my_levels[2] = {&level_one, &level_two};
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -215,18 +237,14 @@ void initGame(){
 //loadLevel() function copies the level data from ROM into RAM
 void loadLevel(u8 lvl){
     // copy the leveldata first
-    if (lvl == 1){
-        memcpy(my_grid, level_one.grid_data, 308); //int = 4bytes, times 77
-        my_segment_goal = level_one.target_pipenumber;
-        my_countdown = level_one.flooz_countdown;
-    }
+    memcpy(my_grid, my_levels[lvl - 1]->grid_data, 308); //int = 4bytes, times 77
+    my_segment_goal = my_levels[lvl - 1]->target_pipenumber;
+    my_countdown = my_levels[lvl - 1]->flooz_countdown;
     // draw the leveldata on the grid
     for(u8 i=0; i< GRIDROWS; i++){
         for(u8 j=0; j< GRIDCOLUMNS; j++){
-            if (my_grid[i][j] == 0){
-                drawSegment(j, i, 0);
-            } else if (my_grid[i][j] >= 1 && my_grid[i][j] <= 4) {
-                drawSegment(j, i, my_grid[i][j]);
+            drawSegment(j, i, my_grid[i][j]);
+            if (my_grid[i][j] >= 1 && my_grid[i][j] <= 4) {
                 flooz_grid_x = j;
                 flooz_grid_y = i; 
                 flooz_x = (j*3)+ FLOOZOFFSETX; 
@@ -459,6 +477,8 @@ void drawFlooz(){
             if ((my_grid[flooz_grid_y][flooz_grid_x] > 0) && ((flooz_length-2)%3 == 2)){
 		         my_grid[flooz_grid_y][flooz_grid_x] = my_grid[flooz_grid_y][flooz_grid_x] * -1;
             }
+            //end pipes
+            if ((5 <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= 8) && ((flooz_length-2) %3 == 0) && flooz_counter == 7){ my_state = LEVEL_CLEARED;}
         }
     } 
     
@@ -514,6 +534,21 @@ void checkNextSegment(){
         } else {         
             VDP_drawText("OOOPS NO PIPE", 10, 24);
             my_state = GAME_OVER;
+        }
+    } else if (1 <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= 4){
+        if (my_state == BONUS_MODE){
+            VDP_drawText("LEVEL CLEARED", 10, 24);
+            my_state = LEVEL_CLEARED;
+        } else {         
+            VDP_drawText("WRONG PIPE", 10, 24);
+            my_state = GAME_OVER;
+        }
+    } else if (5 <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] >= 8){
+        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == TRUE) { 
+            VDP_drawText("WRONG PIPE", 10, 24);
+            my_state = GAME_OVER;
+        } else {
+            VDP_drawText("LEVEL CLEARED", 10, 24);
         }
     } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-PIPEDATAOFFSET][inverseDirection(flooz_direction)] == FALSE) {
         if (my_state == BONUS_MODE){
