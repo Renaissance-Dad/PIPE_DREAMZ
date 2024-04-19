@@ -551,7 +551,7 @@ void checkNextSegment(){
             VDP_drawText("WRONG PIPE", 10, 24);
             my_state = GAME_OVER;
         }
-    } else if (5 <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] >= 8){
+    } else if (5 <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= 8){
         if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == TRUE) { 
             VDP_drawText("WRONG PIPE", 10, 24);
             my_state = GAME_OVER;
