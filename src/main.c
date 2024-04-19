@@ -52,6 +52,14 @@ struct level{
    int grid_data[GRIDROWS][GRIDCOLUMNS];
    // we can add additional data fields later
    u16 flooz_countdown; //in frames (60 frames = 1 sec)
+   u8 level_pace;
+};
+
+struct speed{
+   u8 pixels_per_second;
+   u8 draw_frame;
+   u8 logic_frame;
+   u8 full_tile_frame;
 };
 
 //DATA
@@ -65,7 +73,8 @@ struct level level_one = {1, 16,
         {0,0,0,0,0,0,0,0,0,0,0}, //row 5
         {0,0,0,0,0,0,0,0,0,0,0}  //row 6
     },
-    1200 
+    1200,
+    2 
 };
 
 struct level level_two = {2, 20, 
@@ -78,7 +87,8 @@ struct level level_two = {2, 20,
 		{0,0,0,0,0,9,0,0,0,0,0}, //row 5
 		{0,0,0,0,0,0,0,0,0,0,0}  //row 6
 	}, 
-	300 
+	300,
+    2 
 };
 
 const bool pipe_data[11][4] = {
@@ -104,6 +114,19 @@ const bool pipe_data[11][4] = {
 	{TRUE,FALSE,FALSE,FALSE},
 	//end-segment east: row 10
 	{FALSE,TRUE,FALSE,FALSE}
+};
+
+struct speed game_speeds[5] = {
+		//SLOWEST
+		{6,10,79,80},
+		//SLOWER
+		{10,6,47,48},
+		//STANDARD
+		{12,5,39,40},
+		//FASTER
+		{15,4,31,32},
+		//FASTEST
+		{20,3,23,24},
 };
 
 //GLOBAL SPRITE POINTERS
@@ -141,6 +164,8 @@ enum states {
 enum states my_state = GAME_INIT;
 int my_score = 0;
 struct level *my_levels[2] = {&level_one, &level_two};
+struct speed *game_pace = game_speeds;
+u8 my_pace;
 
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
@@ -174,11 +199,19 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
             }  
         }
         //START-button logic
-        if (changed & BUTTON_START & state){
-		    if (changed & BUTTON_START & state){
-                if (my_state != GAME_PAUSE){my_state = GAME_PAUSE; VDP_drawText("PAUSE",1,26);}
-                else if (my_state == GAME_PAUSE){my_state = GAME_LOOP; VDP_drawText("LOOP!",1,26);}
-            }
+		if (changed & BUTTON_START & state){
+            if (my_state != GAME_PAUSE){my_state = GAME_PAUSE; VDP_drawText("PAUSE",1,26);}
+            else if (my_state == GAME_PAUSE){my_state = GAME_LOOP; VDP_drawText("LOOP!",1,26);}
+        }
+        //B-button logic
+	    if (changed & BUTTON_B & state){
+            if (my_pace <4){my_pace++;}
+            game_pace = &game_speeds[my_pace];
+            char pace_str[4];
+            sprintf(pace_str,"%d", game_pace->pixels_per_second);
+            VDP_drawText("FASTER!",1,27);
+            VDP_drawText(pace_str,9,27);
+            VDP_drawText(" pixels per second", 11,27);		
         }
     }
 }
@@ -248,6 +281,7 @@ void loadLevel(u8 lvl){
     memcpy(my_grid, my_levels[lvl - 1]->grid_data, 308); //int = 4bytes, times 77
     my_segment_goal = my_levels[lvl - 1]->target_pipenumber;
     my_countdown = my_levels[lvl - 1]->flooz_countdown;
+    my_pace = my_levels[lvl - 1]->level_pace;
     // draw the leveldata on the grid
     for(u8 i=0; i< GRIDROWS; i++){
         for(u8 j=0; j< GRIDCOLUMNS; j++){
@@ -423,11 +457,11 @@ void drawCountdown(){
 //drawFlooz() function which draws the flooz, using tiles. 
 void drawFlooz(){
     int game_timer = timer - my_countdown;
-    int flooz_counter = game_timer/5;
+    int flooz_counter = game_timer/game_pace->draw_frame;
     flooz_counter %= 8;
 
     //draw the flooz
-    if (game_timer %5 == 0 && game_timer >= 0) {
+    if (game_timer %game_pace->draw_frame == 0 && game_timer >= 0) {
         //pipes 12-->15 and 1/3rd of flooz drawn
         if ((12 <= my_grid[flooz_grid_y][flooz_grid_x]) && (my_grid[flooz_grid_y][flooz_grid_x] <= 15) && ((flooz_length-2) %3 == 1)){
 			      switch (my_grid[flooz_grid_y][flooz_grid_x]){
@@ -491,7 +525,7 @@ void drawFlooz(){
     } 
     
     // move flooz_x and flooz_y at the end as we need correct coordinates before we draw
-    if (game_timer%40 == 39 && flooz_counter == 7){
+    if (game_timer%game_pace->full_tile_frame == game_pace->logic_frame && flooz_counter == 7){
         switch (flooz_direction) {
             case N: flooz_y--; break;
             case E: flooz_x++; break;
