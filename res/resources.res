@@ -1,5 +1,6 @@
 IMAGE bordertile "border.bmp" 0
 IMAGE pipesregulartile "pipesregular.bmp" AUTO NONE
+IMAGE pipessupertile "pipessuperspecial.bmp" AUTO NONE
 IMAGE pipesspecialtile "pipesspecial.bmp" AUTO NONE
 IMAGE explosioncolors "explosioncolors.bmp" 0
 IMAGE flooztiles "flooz.png" AUTO NONE

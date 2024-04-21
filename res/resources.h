@@ -3,6 +3,7 @@
 
 extern const Image bordertile;
 extern const Image pipesregulartile;
+extern const Image pipessupertile;
 extern const Image pipesspecialtile;
 extern const Image explosioncolors;
 extern const Image flooztiles;
