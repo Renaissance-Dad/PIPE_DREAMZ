@@ -343,6 +343,7 @@ void loadLevel(u8 lvl){
                     case SEG_START_W: flooz_direction = W; break;
                     case SEG_START_N: flooz_direction = N; break;
                     case SEG_START_E: flooz_direction = E; break;
+
                 }
             }
         }     
