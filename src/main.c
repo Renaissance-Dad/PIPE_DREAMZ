@@ -122,9 +122,9 @@ void loadLevel(u8 lvl){
                 flooz_y = (i*3)+ FLOOZOFFSETY; 
                 switch (my_grid[i][j]){
                     case 1: flooz_direction = S; break;
-                    case 2: flooz_direction = E; break;
+                    case 2: flooz_direction = W; break;
                     case 3: flooz_direction = N; break;
-                    case 4: flooz_direction = W; break;
+                    case 4: flooz_direction = E; break;
                 }
             }
         }     
