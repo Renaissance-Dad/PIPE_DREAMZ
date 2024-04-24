@@ -174,6 +174,8 @@ struct speed game_speeds[5] = {
 		{20,3,23,24}
 };
 
+enum direction inverseDirectionTable[4] = {S, W, N, E};
+
 //GLOBAL SPRITE POINTERS
 Sprite* selector_spr;
 Sprite* queue_spr[5];
@@ -635,15 +637,9 @@ void drawFlooz(){
     }   
 }
 
-//simple function inverseDirection() that inverses the enum NESW
+//simple function inverseDirection() that inverses the enum NESW using a LUT (lookuptable)
 enum direction inverseDirection(enum direction windsock){
-    switch (windsock){
-        case N: windsock = S; break;
-        case E: windsock = W; break;
-        case S: windsock = N; break;
-        case W: windsock = E; break;
-    }
-    return windsock;
+return inverseDirectionTable[windsock];
 }
 
 //the checkNextPipe() function which groups all the game-state logic when flooz hits a new grid position
