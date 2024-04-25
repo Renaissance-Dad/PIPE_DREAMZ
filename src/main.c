@@ -47,6 +47,18 @@
 #define TILEINDEXOFFSET_SUPERSPECIAL 10+FLOOZTILES+SPECIALTILES
 #define TILEINDEXOFFSET_REGULAR 10+FLOOZTILES+SPECIALTILES+SUPERTILES
 
+#define IS_BLANK (my_grid[selector_y][selector_x] == 0)
+#define IS_DETONATABLE (my_grid[selector_y][selector_x] >= SEG_VERT)
+#define IS_BEND ((SEG_BEND_SW <= abs(my_grid[flooz_grid_y][flooz_grid_x])) && (abs(my_grid[flooz_grid_y][flooz_grid_x]) <= SEG_BEND_SE))
+#define IS_ENDPIPE ((SEG_END_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_END_W))
+#define FLOOZ_1OF3 ((flooz_length-2) %3 == 0)
+#define FLOOZ_2OF3 ((flooz_length-2) %3 == 1)
+#define FLOOZ_3OF3 ((flooz_length-2) %3 == 2)
+#define IS_CROSS ((my_grid[flooz_grid_y][flooz_grid_x] == SEG_CROSS))
+#define IS_CRISSCROSS ((my_grid[flooz_grid_y][flooz_grid_x] == ((SEG_CROSS + 1) * -1)))
+#define IS_RESERVOIR ((abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_H) || (abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_V))
+#define IS_START ((SEG_START_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_START_W))
+
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
 void initGame();
@@ -72,6 +84,10 @@ void checkNextSegment();
 void drawScoreboard();
 void doTimer();
 
+//debug functions
+void debugGrid();
+int debug = 0;
+
 //STRUCTS
 struct level{
    u8 level_number;
@@ -90,7 +106,7 @@ struct speed{
 };
 
 //DATA
-struct level level_one = {1, 16, 
+struct level level_one = {1, 16,
     {
         {0,0,0,0,0,0,0,0,0,0,0}, //row 0
         {0,0,0,0,0,1,0,0,0,0,0}, //row 1
@@ -105,34 +121,34 @@ struct level level_one = {1, 16,
 };
 
 struct level level_two = {2, 20, 
-	{
-		{0,0,0,0,0,0,0,0,0,0,0}, //row 0
-		{0,0,0,0,9,0,0,0,0,0,0}, //row 1
-		{0,0,0,0,0,0,0,0,0,0,0}, //row 2
-		{0,0,4,0,0,0,0,0,8,0,0}, //row 3
-		{0,0,0,0,0,0,0,0,0,0,0}, //row 4
-		{0,0,0,0,0,9,0,0,0,0,0}, //row 5
-		{0,0,0,0,0,0,0,0,0,0,0}  //row 6
-	}, 
-	300,
+    {
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 0
+        {0,0,0,0,9,0,0,0,0,0,0}, //row 1
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 2
+        {0,0,4,0,0,0,0,0,8,0,0}, //row 3
+        {0,0,0,0,0,0,0,0,0,0,0}, //row 4
+        {0,0,0,0,0,9,0,0,0,0,0}, //row 5
+        {0,0,0,0,0,0,0,0,0,0,0}  //row 6
+    },
+    300,
     2 
 };
 
-struct level level_three = {3, 20, 
-	{
-		{0,0,0,0,0,17,10,14,0,0,0}, //row 0
-		{0,0,0,0,9,11,0,11,0,0,0}, //row 1
-		{0,0,0,0,0,12,0,12,0,0,0}, //row 2
-		{0,0,0,0,0,3,0,11,0,0,0}, //row 3
-		{0,0,0,0,0,0,10,15,0,0,0}, //row 4
-		{0,0,0,0,0,9,0,0,0,0,0}, //row 5
-		{0,0,0,0,0,0,0,0,0,0,0}  //row 6
-	}, 
-	400,
+struct level level_three = {3, 20,
+    {
+        {0,0,0,0,0,17,10,14,0,0,0}, //row 0
+        {0,0,0,0,9,11,0,11,0,0,0}, //row 1
+        {0,0,0,0,0,12,0,12,0,0,0}, //row 2
+        {0,0,0,0,0,3,0,11,0,0,0}, //row 3
+        {0,0,0,0,0,0,10,15,0,0,0}, //row 4
+        {0,0,0,0,0,9,0,0,0,0,0}, //row 5
+        {0,0,0,0,0,0,0,0,0,0,0}  //row 6
+    },
+    400,
     3 
 };
 
-const bool pipe_data[13][4] = {  //NORTH, EAST, SOUTH, WEST 
+const bool pipe_data[14][4] = {  //NORTH, EAST, SOUTH, WEST 
     //straigth down : row 0
     {TRUE,FALSE,TRUE,FALSE},
     //straight flat : row 1
@@ -147,34 +163,34 @@ const bool pipe_data[13][4] = {  //NORTH, EAST, SOUTH, WEST
     {FALSE,TRUE,TRUE,FALSE},
     //cross: row 6
     {TRUE, TRUE, TRUE, TRUE},
-    //end-segment south: row 7
-	{FALSE,FALSE,TRUE,FALSE},
-	//end-segment west: row 8
-	{FALSE,FALSE,FALSE,TRUE},
-	//end-segment north: row 9
-	{TRUE,FALSE,FALSE,FALSE},
-	//end-segment east: row 10
-	{FALSE,TRUE,FALSE,FALSE},
-    //horizontal reservoir: row 11
+    //cross semi filled: row 7
+    {TRUE, TRUE, TRUE, TRUE},
+    //end-segment south: row 8
+    {FALSE,FALSE,TRUE,FALSE},
+    //end-segment west: row 9
+    {FALSE,FALSE,FALSE,TRUE},
+    //end-segment north: row 10
+    {TRUE,FALSE,FALSE,FALSE},
+    //end-segment east: row 11
+    {FALSE,TRUE,FALSE,FALSE},
+    //horizontal reservoir: row 12
     {FALSE,TRUE,FALSE,TRUE},
-    //vertical reservoir: row 12
+    //vertical reservoir: row 13
     {TRUE,FALSE,TRUE,FALSE}
 };
 
 struct speed game_speeds[5] = {
-		//SLOWEST
+		//SLOWEST 0
 		{2,30,239,240},
-		//SLOWER
+		//SLOWER 1
 		{6,10,79,80},
-		//STANDARD
+		//STANDARD 2
 		{12,5,39,40},
-		//FASTER
+		//FASTER 3
 		{15,4,31,32},
 		//FASTEST
 		{20,3,23,24}
 };
-
-enum direction inverseDirectionTable[4] = {S, W, N, E};
 
 //GLOBAL SPRITE POINTERS
 Sprite* selector_spr;
@@ -187,6 +203,7 @@ u8 flooz_x = NULL; //in tiles
 u8 flooz_y = NULL; //in tiles
 enum direction{N,E,S,W};
 enum direction flooz_direction = NULL;
+enum direction inverse_direction_table[4] = {S, W, N, E};
 u8 selector_x;
 u8 selector_y;
 u8 my_segment_goal;
@@ -237,14 +254,14 @@ void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
         }
         //A-button logic
         if (changed & BUTTON_A & state){
-            if (my_grid[selector_y][selector_x] == 0 || my_grid[selector_y][selector_x] >= SEG_VERT){ 
-                if(my_grid[selector_y][selector_x] >= SEG_VERT && sfx_chute == 0){drawExplosion();} 
+            if ((IS_BLANK || IS_DETONATABLE)){ 
+                if(IS_DETONATABLE && sfx_chute == 0){drawExplosion();} 
                 my_grid[selector_y][selector_x] = pipe_queue[tail]+12; //first 10+2 segments are special and/or super segments
                 redrawSingleGridSegment(selector_x, selector_y);
                 redrawQueueSprite();
                 advanceTailQueue();
                 sfx_chute = 24;
-            }  
+            }
         }
         //START-button logic
 		if (changed & BUTTON_START & state){
@@ -279,6 +296,7 @@ int main(bool hard_reset)
         drawFlooz();
         drawScoreboard();
         doTimer();
+        debugGrid();
         SYS_doVBlankProcess();
     }
     return (0);
@@ -480,7 +498,9 @@ void sfxQueueSpritesUpdate(){
             SPR_setPosition(queue_spr[i], 8, SPR_getPositionY(queue_spr[i])+1);
         }
         sfx_chute--;
-    }   
+    } else{
+        sfx_chute = 104 - SPR_getPositionY(queue_spr[tail]);   
+    } 
     SPR_update();
 }
 
@@ -516,11 +536,11 @@ void drawFlooz(){
 
     //draw the flooz
     if ((game_timer %(game_pace_ptr->draw_frame) == 0) && (game_timer >= 0)) {
-        //bend pipes 1/3rd of flooz drawn
-        if ((SEG_BEND_SW <= abs(my_grid[flooz_grid_y][flooz_grid_x])) && (abs(my_grid[flooz_grid_y][flooz_grid_x]) <= SEG_BEND_SE) && ((flooz_length-2) %3 == 1)){
-			switch (abs(my_grid[flooz_grid_y][flooz_grid_x])){
+        //bend pipes 1/3rd of flooz drawn; we're now drawing the BEND piece
+        if (IS_BEND && FLOOZ_2OF3){
+            switch (abs(my_grid[flooz_grid_y][flooz_grid_x])){
                 case SEG_BEND_SW: //SW pipe
-		            if (flooz_direction == E) {
+                    if (flooz_direction == E) {
                         VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,TRUE,FLOOZTILEINDEXCWSTART+flooz_counter), flooz_x, flooz_y);
                         if (flooz_counter == 7){ flooz_direction = S;}
                     } else if (flooz_direction == N) {
@@ -557,11 +577,11 @@ void drawFlooz(){
                 break;
             }
         //END OF BEND PIPES
-        //BONUS SCORE FOR COMPLETING A LOOP
-        } else if ((my_grid[flooz_grid_y][flooz_grid_x] == -SEG_CROSS) && ((flooz_length-2) %3 == 1)){
+        //BONUS SCORE FOR COMPLETING A LOOP AND NOT REDRAWING THE MIDDLE FLOOZ
+        } else if ((IS_CRISSCROSS) && FLOOZ_2OF3){
             if (flooz_counter == 7){ my_score += 100;}
         //START OF NORMAL PIPE SEGMENTS  
-		} else {
+        } else {
             //when in a straight tile based on the direction, we draw the flooz
             switch (flooz_direction) {
                 case N: VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,TRUE,FALSE,FLOOZTILEINDEXVERTSTART -flooz_counter), flooz_x, flooz_y); break;
@@ -570,8 +590,8 @@ void drawFlooz(){
                 case W: VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXHORZSTART -flooz_counter), flooz_x, flooz_y); break;
             }
             //reservoir segments
-            if ((abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_H) || (abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_V)){
-                if ((flooz_length-2) %3 == 0){
+            if (IS_RESERVOIR){
+                if (FLOOZ_1OF3){
                     if ((my_pace > 0) && (flooz_counter == 0)){my_pace = 0;}
                 }
                 game_pace_ptr = &game_speeds[my_pace];
@@ -593,14 +613,19 @@ void drawFlooz(){
                         VDP_setTileMapXY(BG_B,TILE_ATTR_FULL(PAL1,0,FALSE,FALSE,FLOOZTILEINDEXHORZSTART -flooz_counter), flooz_x, flooz_y-1); 
                     break;
                 }
-                if (flooz_counter == 7){ my_score += 100;}
+                if (FLOOZ_3OF3 && flooz_counter == 7){ my_score += 80;}
             }
             //switch the sign after filling a segment
-            if ((my_grid[flooz_grid_y][flooz_grid_x] > 0) && ((flooz_length-2)%3 == 0)){
-		         my_grid[flooz_grid_y][flooz_grid_x] = my_grid[flooz_grid_y][flooz_grid_x] * -1;
+            if (my_grid[flooz_grid_y][flooz_grid_x] > 0 && FLOOZ_1OF3){
+                my_grid[flooz_grid_y][flooz_grid_x] = my_grid[flooz_grid_y][flooz_grid_x] * -1; // does this really trigger once?
             }
             //end pipes
-            if ((SEG_END_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_END_W) && ((flooz_length-2) %3 == 0) && flooz_counter == 7){ my_state = LEVEL_CLEARED;}
+            if ((IS_ENDPIPE) && (FLOOZ_1OF3) && flooz_counter == 7){ my_state = LEVEL_CLEARED;}
+            //fixing cross double pass
+            if (my_grid[flooz_grid_y][flooz_grid_x] == -SEG_CROSS && FLOOZ_3OF3 && flooz_counter == 7){
+                //minus one turns this into SEG_CRISSCROSS
+                my_grid[flooz_grid_y][flooz_grid_x] = (my_grid[flooz_grid_y][flooz_grid_x]) -1;
+            }
         }
     } 
     
@@ -614,7 +639,7 @@ void drawFlooz(){
         }
         flooz_length++;
         //change flooz_grid variables based on the flooz_length
-        if ((flooz_length-2) %3 == 0){
+        if (FLOOZ_1OF3){
             switch (flooz_direction){
                 case N: flooz_grid_y--; break;
                 case E: flooz_grid_x++; break;
@@ -639,7 +664,7 @@ void drawFlooz(){
 
 //simple function inverseDirection() that inverses the enum NESW using a LUT (lookuptable)
 enum direction inverseDirection(enum direction windsock){
-return inverseDirectionTable[windsock];
+    return inverse_direction_table[windsock];
 }
 
 //the checkNextPipe() function which groups all the game-state logic when flooz hits a new grid position
@@ -653,7 +678,7 @@ void checkNextSegment(){
             VDP_drawText("OOOPS NO PIPE", 10, 24);
             my_state = GAME_OVER;
         }
-    } else if (SEG_START_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_START_W){
+    } else if (IS_START){
         if (my_state == BONUS_MODE){
             VDP_drawText("LEVEL CLEARED", 10, 24);
             my_state = LEVEL_CLEARED;
@@ -661,15 +686,15 @@ void checkNextSegment(){
             VDP_drawText("WRONG PIPE", 10, 24);
             my_state = GAME_OVER;
         }
-    } else if (SEG_END_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_END_W){
+    } else if (IS_ENDPIPE){
         if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == TRUE) {    //DOUBLE CHECK THIS NUMBER
             VDP_drawText("WRONG PIPE", 10, 24);
             my_state = GAME_OVER;
         } else {
             VDP_drawText("PIPE COMPLETED", 10, 24);
         }
-    } else if ((my_grid[flooz_grid_y][flooz_grid_x] == SEG_RESV_H) || (my_grid[flooz_grid_y][flooz_grid_x] == SEG_RESV_V)){
-        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]][inverseDirection(flooz_direction)] == FALSE){
+    } else if (IS_RESERVOIR){
+        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]][inverseDirection(flooz_direction)] == FALSE){  //double check offset
             VDP_drawText("RESERVOIR DOGS", 10, 24);
         }
     } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-12][inverseDirection(flooz_direction)] == FALSE) {
@@ -704,13 +729,15 @@ void doTimer(){
 		}
 }
 
-/*
-//debug function that draws the current 
-void debugTimer(){
-    char pace_str[5];
-    sprintf(pace_str,"%d",my_pace);
-    VDP_drawText("PACE:",1,25);
-    VDP_drawText(pace_str,6,25);
-    VDP_drawText("DRAWF:");
+
+//debug function that draws the current grid value
+void debugGrid(){
+    char grid_str[5];
+    for(u8 i=0; i< GRIDROWS; i++){
+        for(u8 j=0; j< GRIDCOLUMNS; j++){
+            sprintf(grid_str,"%d",my_grid[i][j]);    
+            VDP_drawText(grid_str,(j*3)+6,(i*3)+4);   //x y
+        }
+    }
 }
-*/
+
