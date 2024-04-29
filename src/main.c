@@ -37,6 +37,7 @@
 #define SEG_BEND_NE 16 
 #define SEG_BEND_SE 17 
 #define SEG_CROSS 18
+#define SEG_CRISSCROSS SEG_CROSS+1
 
 #define BORDERTILES 9
 #define FLOOZTILES 33
@@ -149,7 +150,7 @@ struct level level_three = {3, 20,
 };
 
 const bool pipe_data[14][4] = {  //NORTH, EAST, SOUTH, WEST 
-    //straigth down : row 0
+    //straigth down : row 0  --> segment 12 (-12)
     {TRUE,FALSE,TRUE,FALSE},
     //straight flat : row 1
     {FALSE,TRUE,FALSE,TRUE},
@@ -165,7 +166,7 @@ const bool pipe_data[14][4] = {  //NORTH, EAST, SOUTH, WEST
     {TRUE, TRUE, TRUE, TRUE},
     //cross semi filled: row 7
     {TRUE, TRUE, TRUE, TRUE},
-    //end-segment south: row 8
+    //end-segment south: row 8 --> segment 5 (+3)
     {FALSE,FALSE,TRUE,FALSE},
     //end-segment west: row 9
     {FALSE,FALSE,FALSE,TRUE},
@@ -173,7 +174,7 @@ const bool pipe_data[14][4] = {  //NORTH, EAST, SOUTH, WEST
     {TRUE,FALSE,FALSE,FALSE},
     //end-segment east: row 11
     {FALSE,TRUE,FALSE,FALSE},
-    //horizontal reservoir: row 12
+    //horizontal reservoir: row 12 --> segment 10 (+2)
     {FALSE,TRUE,FALSE,TRUE},
     //vertical reservoir: row 13
     {TRUE,FALSE,TRUE,FALSE}
@@ -687,14 +688,14 @@ void checkNextSegment(){
             my_state = GAME_OVER;
         }
     } else if (IS_ENDPIPE){
-        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == TRUE) {    //DOUBLE CHECK THIS NUMBER
+        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+3][inverseDirection(flooz_direction)] == TRUE) {    //DOUBLE CHECK THIS NUMBER
             VDP_drawText("WRONG PIPE", 10, 24);
             my_state = GAME_OVER;
         } else {
             VDP_drawText("PIPE COMPLETED", 10, 24);
         }
     } else if (IS_RESERVOIR){
-        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]][inverseDirection(flooz_direction)] == FALSE){  //double check offset
+        if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == FALSE){  //double check offset
             VDP_drawText("RESERVOIR DOGS", 10, 24);
         }
     } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-12][inverseDirection(flooz_direction)] == FALSE) {
