@@ -18,4 +18,4 @@ out/src/main.o: src/main.c c:/SGDK2/inc/genesis.h c:/SGDK2/inc/types.h \
  c:/SGDK2/inc/ext/flash-save/flash.h c:/SGDK2/inc/types.h \
  c:/SGDK2/inc/ext/flash-save/saveman.h c:/SGDK2/inc/ext/console.h \
  c:/SGDK2/inc/config.h c:/SGDK2/inc/string.h c:/SGDK2/inc/maths.h \
- c:/SGDK2/inc/dma.h res/resources.h
+ c:/SGDK2/inc/dma.h res/resources.h src/gamedata.h
