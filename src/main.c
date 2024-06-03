@@ -2,65 +2,6 @@
 #include <resources.h>
 #include "gamedata.h"
 
-//DEFINES
-#define GRIDROWS 7
-#define GRIDCOLUMNS 11
-#define GRIDOFFSETX 6
-#define GRIDOFFSETY 4
-#define FLOOZOFFSETX 7
-#define FLOOZOFFSETY 5
-#define SELECTOROFFSETX 47
-#define SELECTOROFFSETY 31
-#define FLOOZTILEINDEXSTART 10
-#define FLOOZTILEINDEXVERTEMPTY 18
-#define FLOOZTILEINDEXVERTSTART 26
-#define FLOOZTILEINDEXHORZSTART 17
-#define PIPEDATAOFFSET 10
-#define FLOOZTILEINDEXCWSTART 35
-#define FLOOZTILEINDEXCCWSTART 27
-
-#define SEG_BLANK 0
-#define SEG_START_S 1
-#define SEG_START_W 2 
-#define SEG_START_N 3 
-#define SEG_START_E 4
-#define SEG_END_S 5 
-#define SEG_END_E 6
-#define SEG_END_N 7
-#define SEG_END_W 8 
-#define SEG_DEAD 9 
-#define SEG_RESV_H 10 
-#define SEG_RESV_V 11
-#define SEG_VERT 12
-#define SEG_HORZ 13
-#define SEG_BEND_SW 14
-#define SEG_BEND_NW 15 
-#define SEG_BEND_NE 16 
-#define SEG_BEND_SE 17 
-#define SEG_CROSS 18
-#define SEG_CRISSCROSS SEG_CROSS+1
-
-#define BORDERTILES 9
-#define FLOOZTILES 33
-#define SPECIALTILES 90
-#define SUPERTILES 18
-#define REGULARTILES 63
-#define TILEINDEXOFFSET_START 10+FLOOZTILES
-#define TILEINDEXOFFSET_SUPERSPECIAL 10+FLOOZTILES+SPECIALTILES
-#define TILEINDEXOFFSET_REGULAR 10+FLOOZTILES+SPECIALTILES+SUPERTILES
-
-#define IS_BLANK (my_grid[selector_y][selector_x] == 0)
-#define IS_DETONATABLE (my_grid[selector_y][selector_x] >= SEG_VERT)
-#define IS_BEND ((SEG_BEND_SW <= abs(my_grid[flooz_grid_y][flooz_grid_x])) && (abs(my_grid[flooz_grid_y][flooz_grid_x]) <= SEG_BEND_SE))
-#define IS_ENDPIPE ((SEG_END_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_END_W))
-#define FLOOZ_1OF3 ((flooz_length-2) %3 == 0)
-#define FLOOZ_2OF3 ((flooz_length-2) %3 == 1)
-#define FLOOZ_3OF3 ((flooz_length-2) %3 == 2)
-#define IS_CROSS ((my_grid[flooz_grid_y][flooz_grid_x] == SEG_CROSS))
-#define IS_CRISSCROSS ((my_grid[flooz_grid_y][flooz_grid_x] == ((SEG_CROSS + 1) * -1)))
-#define IS_RESERVOIR ((abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_H) || (abs(my_grid[flooz_grid_y][flooz_grid_x]) == SEG_RESV_V))
-#define IS_START ((SEG_START_S <= my_grid[flooz_grid_y][flooz_grid_x] && my_grid[flooz_grid_y][flooz_grid_x] <= SEG_START_W))
-
 //FFWD DECLARATION OF OUR FUNCTIONS
 void drawBorder(u8 x_column, u8 y_row, u8 width, u8 height);
 void initGame();
@@ -85,8 +26,9 @@ enum direction inverseDirection(enum direction windsock);
 void checkNextSegment();
 void drawScoreboard();
 void doTimer();
+void updateGameState (char *text, enum states update_state);
 
-//debug functions
+//DEBUG FUNCTIONS
 void debugGrid();
 int debug = 0;
 
@@ -95,41 +37,19 @@ Sprite* selector_spr;
 Sprite* queue_spr[5];
 Sprite* explosion_spr;
 
-//GLOBAL VARIABLES
+//VARIABLES
 int my_grid[GRIDROWS][GRIDCOLUMNS];
-u8 flooz_x = NULL; //in tiles
-u8 flooz_y = NULL; //in tiles
-enum direction{N,E,S,W};
-enum direction flooz_direction = NULL;
-enum direction inverse_direction_table[4] = {S, W, N, E};
 u8 selector_x;
 u8 selector_y;
 u8 my_segment_goal;
 u8 pipe_queue[5];
-u8 head = 0;
-u8 tail = 0;
-u8 sfx_chute = 0;
-u8 sfx_explosion_frame = 0;
 u16 my_countdown;
-u16 timer = 0;
-u8 flooz_length; //in tiles
+u8 flooz_length;
 u8 flooz_grid_x;
 u8 flooz_grid_y;
-enum states {
-    GAME_INIT,
-    GAME_LOOP,
-    GAME_OVER,
-    GAME_PAUSE,
-    LEVEL_CLEARED,
-    BONUS_MODE
-};
-enum states my_state = GAME_INIT;
-int my_score = 0;
-struct level *my_levels_ptr[3] = {&level_one, &level_two, &level_three};
-struct speed *game_pace_ptr = game_speeds;
 u8 my_pace;
 u8 my_level;
-
+   
 //actual callback function for the joypad
 void myJoyEventCallbackGame(u16 joy, u16 changed, u16 state){
     if (joy == JOY_1){
@@ -568,41 +488,25 @@ enum direction inverseDirection(enum direction windsock){
 //the checkNextPipe() function which groups all the game-state logic when flooz hits a new grid position
 void checkNextSegment(){
 	//check if pipe is valid and update gamestate
-    if (my_grid[flooz_grid_y][flooz_grid_x] == SEG_BLANK){ 
-        if (my_state == BONUS_MODE){
-            VDP_drawText("LEVEL CLEARED", 10, 24);
-            my_state = LEVEL_CLEARED;
-        } else {         
-            VDP_drawText("OOOPS NO PIPE", 10, 24);
-            my_state = GAME_OVER;
-        }
+    //we first calculate a bool
+    //we then use an inline function to pass the correct args into updateGameState() function
+    bool is_bonus_mode = (my_state == BONUS_MODE);
+    if (IS_BLANK){ 
+        updateGameState(is_bonus_mode ? "LEVEL CLEARED" : "OOPS NO PIPE", is_bonus_mode ? LEVEL_CLEARED : GAME_OVER);
     } else if (IS_START){
-        if (my_state == BONUS_MODE){
-            VDP_drawText("LEVEL CLEARED", 10, 24);
-            my_state = LEVEL_CLEARED;
-        } else {         
-            VDP_drawText("WRONG PIPE", 10, 24);
-            my_state = GAME_OVER;
-        }
+        updateGameState(is_bonus_mode ? "LEVEL CLEARED" : "WRONG PIPE", is_bonus_mode ? LEVEL_CLEARED : GAME_OVER);
     } else if (IS_ENDPIPE){
         if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+3][inverseDirection(flooz_direction)] == TRUE) {    //DOUBLE CHECK THIS NUMBER
-            VDP_drawText("WRONG PIPE", 10, 24);
-            my_state = GAME_OVER;
+            updateGameState("WRONG PIPE", GAME_OVER);
         } else {
-            VDP_drawText("PIPE COMPLETED", 10, 24);
+            updateGameState("PIPE COMPLETED", my_state);
         }
     } else if (IS_RESERVOIR){
         if (pipe_data[my_grid[flooz_grid_y][flooz_grid_x]+2][inverseDirection(flooz_direction)] == FALSE){  //double check offset
-            VDP_drawText("RESERVOIR DOGS", 10, 24);
+            updateGameState("RESERVOIR DOGS", my_state);
         }
     } else if (pipe_data[abs(my_grid[flooz_grid_y][flooz_grid_x])-12][inverseDirection(flooz_direction)] == FALSE) {
-        if (my_state == BONUS_MODE){
-            VDP_drawText("LEVEL CLEARED", 10, 24);
-            my_state = LEVEL_CLEARED;
-        } else {         
-            VDP_drawText("WRONG PIPE", 10, 24);
-            my_state = GAME_OVER;
-        }
+        updateGameState(is_bonus_mode ? "LEVEL CLEARED" : "WRONG PIPE", is_bonus_mode ? LEVEL_CLEARED : GAME_OVER);
     } 
 }
 
@@ -627,6 +531,11 @@ void doTimer(){
 		}
 }
 
+//function that updates the gamestate 
+void updateGameState (char *text, enum states update_state){
+    VDP_drawText(text, 10, 24);
+    my_state = update_state;
+}
 
 //debug function that draws the current grid value
 void debugGrid(){
@@ -638,4 +547,5 @@ void debugGrid(){
         }
     }
 }
+
 
